@@ -237,3 +237,32 @@ Important:
 - Use page.setContent(...) in beforeEach for this exercise.
 - The test must loop through all result items and verify the condition for every item.
 - Do not assert only the first result.
+
+## Exercise 4 — Locator Fix
+
+account.spec.ts has been updated:
+data-testid="remember-preferences" --> data-testid="remember-settings"
+
+Prompt used:
+You are a Senior QA Automation Engineer.
+
+I have an issue in this file:
+AccountPage.ts
+
+Problem:
+The locator in rememberPreferencesCheckbox() is outdated.
+The checkbox now has data-testid="remember-settings".
+
+Updated element outerHTML:
+<label>
+  <input type="checkbox" data-testid="remember-settings" />
+  Remember preferences
+</label>
+
+Fix:
+- Replace the outdated locator with the new data-testid value.
+- Keep the class structure unchanged.
+- Keep method names and signatures unchanged.
+- Do not modify unrelated code.
+- Output corrected code only with file header:
+  // path: src/pages/AccountPage.ts

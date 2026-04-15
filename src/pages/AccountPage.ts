@@ -6,7 +6,7 @@ export class AccountPage {
   constructor(private page: Page) {}
 
   rememberPreferencesCheckbox() {
-    return this.page.getByTestId('remember-preferences');
+    return this.page.getByTestId('remember-settings');
   }
 
   async clickTabByName(tabName: AccountTab) {

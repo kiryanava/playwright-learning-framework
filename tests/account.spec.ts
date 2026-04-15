@@ -8,7 +8,7 @@ test.describe('Account Page Tabs', () => {
       <button data-testid="tab-settings">Settings</button>
       <button data-testid="tab-security">Security</button>
       <label>
-        <input type="checkbox" data-testid="remember-preferences" />
+        <input type="checkbox" data-testid="remember-settings" />
         Remember preferences
       </label>
     `);
