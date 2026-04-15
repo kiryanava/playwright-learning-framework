@@ -165,3 +165,75 @@ Task:
 Important:
 - Use page.setContent(...) in beforeEach to simulate the UI for this exercise.
 - The test should read like a business scenario, not like a list of selectors.
+
+## Exercise 3 — Search with Filters
+
+Prompt used:
+
+You are a Senior QA Automation Engineer expert in TypeScript and Playwright E2E testing.
+Write concise, typed, maintainable TypeScript.
+
+Project & framework:
+- Stack: TypeScript + Playwright
+- Patterns: Page Object Model
+- Selectors: getByTestId, getByRole, getByLabel only
+- Structure:
+  - tests/e2e/search.spec.ts
+  - src/pages/SearchPage.ts
+  - src/pages/ResultsPage.ts
+
+Rules:
+- Reuse the existing SearchPage from src/pages/SearchPage.ts if it already exists.
+- Do not create duplicate SearchPage files.
+- Locators and actions must live inside page classes, not inside tests.
+- Use stable selectors only.
+- The test must assert all result prices, not just one item.
+- Add comments in the test:
+  - // Initialization
+  - // User actions
+  - // Verification
+- Output only final code blocks with file headers:
+  // path: <relative_path>
+
+Optional DOM context (outerHTML):
+<div>
+  <input data-testid="search-input" />
+  <button data-testid="search-btn">Search</button>
+  <button data-testid="filter-price-lt-1000">Price < $1000</button>
+
+  <div role="list" data-testid="results">
+    <div data-testid="result-item">
+      <span data-testid="result-title">Laptop A</span>
+      <span data-testid="result-price">$999</span>
+    </div>
+    <div data-testid="result-item">
+      <span data-testid="result-title">Laptop B</span>
+      <span data-testid="result-price">$899</span>
+    </div>
+    <div data-testid="result-item">
+      <span data-testid="result-title">Laptop C</span>
+      <span data-testid="result-price">$1200</span>
+    </div>
+  </div>
+</div>
+
+Task:
+1) Extend or reuse src/pages/SearchPage.ts with methods:
+   - queryInput()
+   - submit()
+   - applyFilter(filterName: string)
+
+2) Generate src/pages/ResultsPage.ts with methods:
+   - items()
+   - titleOf(index: number)
+   - priceOf(index: number)
+
+3) Generate tests/e2e/search.spec.ts:
+   - // Initialization: open search page
+   - // User actions: type "Laptop", apply filter "Price < $1000"
+   - // Verification: each result price < 1000
+
+Important:
+- Use page.setContent(...) in beforeEach for this exercise.
+- The test must loop through all result items and verify the condition for every item.
+- Do not assert only the first result.
