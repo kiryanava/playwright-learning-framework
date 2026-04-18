@@ -266,3 +266,33 @@ Fix:
 - Do not modify unrelated code.
 - Output corrected code only with file header:
   // path: src/pages/AccountPage.ts
+
+
+## Exercise 5 — Utility Fix
+
+Prompt used:
+You are a Senior QA Automation Engineer.
+
+I have an issue in this file:
+
+// path: src/utils/dateHelper.ts
+export function formatDate(date: string): string {
+  return new Date(date).toLocaleDateString();
+}
+
+Problem:
+The function throws or behaves incorrectly when the input is null or undefined.
+
+Expected behavior:
+- formatDate(null) should return ''
+- formatDate(undefined) should return ''
+- formatDate('2024-01-01') should behave as before
+
+Fix:
+- Add a guard for null/undefined input
+- Keep the rest of the logic unchanged
+- Do not refactor the function
+- Keep function name and signature consistent
+- Only update this function
+- Output only corrected code with file header:
+  // path: src/utils/dateHelper.ts
