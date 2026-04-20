@@ -1,37 +1,21 @@
 import { Page } from '@playwright/test';
 
-/**
- * Page Object Model for the Main Page
- * Encapsulates locators and interactions for the main navigation
- */
 export class MainPage {
   constructor(private page: Page) {}
 
-  /**
-   * Locator for the main navigation section
-   */
-  get navigation() {
-    return this.page.getByTestId('main-nav');
+  navigation() {
+    return this.page.getByRole('navigation', { name: 'Main navigation' });
   }
 
-  /**
-   * Locator for the Docs link
-   */
-  get docsLink() {
-    return this.page.getByTestId('nav-docs');
+  docsLink() {
+    return this.page.getByRole('link', { name: 'Docs' });
   }
 
-  /**
-   * Locator for the API link
-   */
-  get apiLink() {
-    return this.page.getByTestId('nav-api');
+  apiLink() {
+    return this.page.getByRole('link', { name: 'API' });
   }
 
-  /**
-   * Locator for the Community link
-   */
-  get communityLink() {
-    return this.page.getByTestId('nav-community');
+  communityLink() {
+    return this.page.getByRole('link', { name: 'Community' });
   }
 }

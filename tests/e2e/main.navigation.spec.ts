@@ -19,9 +19,9 @@ test.describe('Main page navigation', () => {
 
   test('Main page should display navigation links: Docs, API, Community', async ({ page }) => {
     // User actions
-    const navigation = mainPage.navigation();
-    const apiLink = mainPage.apiLink();
-    const communityLink = mainPage.communityLink();
+    const navigation = mainPage.navigation;
+    const apiLink = mainPage.apiLink;
+    const communityLink = mainPage.communityLink;
 
     await page.waitForTimeout(2000);
 
