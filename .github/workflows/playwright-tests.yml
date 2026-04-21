@@ -52,3 +52,4 @@ jobs:
           name: playwright-traces
           path: test-results/**/trace*.zip
           if-no-files-found: ignore
+# just a comment to trigger the workflow
