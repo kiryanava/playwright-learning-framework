@@ -1,3 +1,4 @@
+// path: tests/e2e/checkout.spec.ts
 import { test, expect } from '@playwright/test';
 import { SearchPage } from '../../src/pages/SearchPage';
 import { ProductPage } from '../../src/pages/ProductPage';
@@ -6,8 +7,10 @@ import { CheckoutPage } from '../../src/pages/CheckoutPage';
 import { Header } from '../../src/components/Header';
 import { checkoutProduct } from '../../src/fixtures/testData';
 
-test.describe('Checkout flow', () => {
+// TC-CHECKOUT-001: Verify end-to-end checkout flow from search to order placement
+test.describe('TC-CHECKOUT-001 - Checkout flow', () => {
   test.beforeEach(async ({ page }) => {
+    // Set up mock HTML structure for search, product, cart, and checkout
     await page.setContent(`
       <div>
         <header>
@@ -64,37 +67,42 @@ test.describe('Checkout flow', () => {
     `);
   });
 
-  test('search, add product and complete checkout', async ({ page }) => {
+  test('should allow searching for a product, adding it to cart, and proceeding to checkout', async ({ page }) => {
     const searchPage = new SearchPage(page);
     const productPage = new ProductPage(page);
     const cartPage = new CartPage(page);
     const checkoutPage = new CheckoutPage(page);
     const header = new Header(page);
 
-    // Initialization
+    await expect(header.cartBadge()).toHaveText('0');
+    await expect(cartPage.total()).toHaveText('$0');
+    await expect(checkoutPage.container()).not.toBeVisible();
+    await expect(searchPage.productResult(checkoutProduct.name)).not.toBeVisible();
+
+    // Initialization: Prepare search query
     await searchPage.queryInput().fill(checkoutProduct.searchQuery);
 
-    // User actions
+    // User Actions: Perform search and verify product appears
     await searchPage.submit().click();
+    
+
+    // Verification: Ensure product details are correct before adding to cart
     await expect(searchPage.productResult(checkoutProduct.name)).toBeVisible();
-    await productPage.addToCart().click();
-
-    // Verification
-    await expect(header.cartBadge()).toHaveText('1');
-
-    await expect(page.getByTestId('cart-total')).toHaveText(checkoutProduct.price);
-
     await expect(productPage.title()).toHaveText(checkoutProduct.name);
     await expect(productPage.price()).toHaveText(checkoutProduct.price);
 
+    // User Actions: Add product to cart
+    await productPage.addToCart().click();
 
+    // Verification: Confirm cart updates correctly
+    await expect(header.cartBadge()).toHaveText('1');
+    await expect(cartPage.total()).toHaveText(checkoutProduct.price);
 
-    // User actions
+    // User Actions: Proceed to checkout
     await cartPage.proceedToCheckout().click();
-    
-    await expect(page.getByTestId('checkout-page')).toBeVisible();
-    
-    // Verification
+
+    // Verification: Ensure checkout page loads and total matches cart
+    await expect(checkoutPage.container()).toBeVisible();
     await expect(checkoutPage.total()).toHaveText(checkoutProduct.total);
   });
 });

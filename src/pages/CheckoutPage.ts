@@ -10,4 +10,8 @@ export class CheckoutPage {
   placeOrder(): Locator {
     return this.page.getByTestId('place-order-btn');
   }
+
+  container(): Locator {
+  return this.page.getByTestId('checkout-page');
+  }
 }

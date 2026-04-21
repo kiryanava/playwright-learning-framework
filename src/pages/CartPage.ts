@@ -10,4 +10,8 @@ export class CartPage {
   proceedToCheckout(): Locator {
     return this.page.getByTestId('checkout-btn');
   }
+
+  total(): Locator {
+  return this.page.getByTestId('cart-total');
+}
 }
