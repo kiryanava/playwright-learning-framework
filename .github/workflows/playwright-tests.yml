@@ -52,4 +52,39 @@ jobs:
           name: playwright-traces
           path: test-results/**/trace*.zip
           if-no-files-found: ignore
-# just a comment to trigger the workflow
+
+      - name: Send Teams notification on failure
+        if: failure()
+        run: |
+          curl -X POST ${{ secrets.TEAMS_WEBHOOK_URL }} \
+            -H 'Content-Type: application/json' \
+            -d '{
+              "title": "Playwright Tests Failed",
+              "sections": [
+                {
+                  "activityTitle": "PR: ${{ github.event.pull_request.title }}",
+                  "facts": [
+                    {
+                      "name": "Author",
+                      "value": "${{ github.event.pull_request.user.login }}"
+                    },
+                    {
+                      "name": "Branch",
+                      "value": "${{ github.event.pull_request.head.ref }}"
+                    }
+                  ]
+                }
+              ],
+              "potentialAction": [
+                {
+                  "@type": "OpenUri",
+                  "name": "View Workflow Run",
+                  "targets": [
+                    {
+                      "os": "default",
+                      "uri": "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+                    }
+                  ]
+                }
+              ]
+            }'
