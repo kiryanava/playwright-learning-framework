@@ -54,10 +54,17 @@ jobs:
           if-no-files-found: ignore
 
       - name: Send Teams notification on failure
-        if: ${{ failure() && secrets.TEAMS_WEBHOOK_URL != '' }}
+        if: failure()
         shell: bash
+        env:
+          TEAMS_WEBHOOK_URL: ${{ secrets.TEAMS_WEBHOOK_URL }}
         run: |
-          curl -X POST "${{ secrets.TEAMS_WEBHOOK_URL }}" \
+          if [ -z "$TEAMS_WEBHOOK_URL" ]; then
+            echo "TEAMS_WEBHOOK_URL is not configured. Skipping Teams notification."
+            exit 0
+          fi
+
+          curl -X POST "$TEAMS_WEBHOOK_URL" \
             -H "Content-Type: application/json" \
             -d '{
               "title": "Playwright Tests Failed",
