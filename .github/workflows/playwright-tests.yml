@@ -109,27 +109,37 @@ jobs:
 
       - name: Prepare history
         if: always() && github.ref == 'refs/heads/main'
+        shell: bash
         run: |
-          mkdir -p temp
-          cd temp
-          git init
-          git remote add origin https://github.com/${{ github.repository }}.git
-          git fetch origin gh-pages
-          git checkout origin/gh-pages -- history.json 2>/dev/null || echo '[]' > ../playwright-report/history.json
-          cp history.json ../playwright-report/ 2>/dev/null || true
-          cd ..
+          mkdir -p playwright-report
+
           TIMESTAMP=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
           RUN_URL="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
           COMMIT_SHA="${{ github.sha }}"
           REF="${{ github.ref }}"
           CONCLUSION="${{ job.status }}"
+
           if [ -f playwright-report/results.json ]; then
             COUNTS=$(jq '.summary | {passed, failed, skipped}' playwright-report/results.json)
           else
-            COUNTS=null
+            COUNTS='null'
           fi
-          NEW_ENTRY=$(jq -n --arg ts "$TIMESTAMP" --arg url "$RUN_URL" --arg sha "$COMMIT_SHA" --arg ref "$REF" --arg conc "$CONCLUSION" --argjson counts "$COUNTS" '{timestamp: $ts, runUrl: $url, commitSha: $sha, ref: $ref, conclusion: $conc, counts: $counts}')
-          jq ". + [$NEW_ENTRY]" playwright-report/history.json > temp_history.json && mv temp_history.json playwright-report/history.json
+
+          jq -n \
+            --arg ts "$TIMESTAMP" \
+            --arg url "$RUN_URL" \
+            --arg sha "$COMMIT_SHA" \
+            --arg ref "$REF" \
+            --arg conc "$CONCLUSION" \
+            --argjson counts "$COUNTS" \
+            '[{
+              timestamp: $ts,
+              runUrl: $url,
+              commitSha: $sha,
+              ref: $ref,
+              conclusion: $conc,
+              counts: $counts
+            }]' > playwright-report/history.json
 
       - name: Upload pages artifact
         if: always() && github.ref == 'refs/heads/main'
