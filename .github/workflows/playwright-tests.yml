@@ -3,6 +3,8 @@ name: Playwright Tests
 on:
   pull_request:
     branches: [ main ]
+  push:
+    branches: [ main ]
 
 permissions:
   contents: read
@@ -15,6 +17,10 @@ jobs:
   playwright-tests:
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
     env:
       CI: true
 
@@ -52,3 +58,120 @@ jobs:
           name: playwright-traces
           path: test-results/**/trace*.zip
           if-no-files-found: ignore
+
+      - name: Send Teams notification on failure
+        if: failure()
+        shell: bash
+        env:
+          TEAMS_WEBHOOK_URL: ${{ secrets.TEAMS_WEBHOOK_URL }}
+        run: |
+          if [ -z "$TEAMS_WEBHOOK_URL" ]; then
+            echo "TEAMS_WEBHOOK_URL is not configured. Skipping Teams notification."
+            exit 0
+          fi
+
+          curl -X POST "$TEAMS_WEBHOOK_URL" \
+            -H "Content-Type: application/json" \
+            -d '{
+              "title": "Playwright Tests Failed",
+              "sections": [
+                {
+                  "activityTitle": "PR: ${{ github.event.pull_request.title }}",
+                  "facts": [
+                    {
+                      "name": "Author",
+                      "value": "${{ github.event.pull_request.user.login }}"
+                    },
+                    {
+                      "name": "Branch",
+                      "value": "${{ github.event.pull_request.head.ref }}"
+                    }
+                  ]
+                }
+              ],
+              "potentialAction": [
+                {
+                  "@type": "OpenUri",
+                  "name": "View Workflow Run",
+                  "targets": [
+                    {
+                      "os": "default",
+                      "uri": "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+                    }
+                  ]
+                }
+              ]
+            }'
+
+      - name: Install jq
+        if: always() && github.ref == 'refs/heads/main'
+        run: sudo apt-get update && sudo apt-get install -y jq
+
+      - name: Prepare history
+        if: always() && github.ref == 'refs/heads/main'
+        run: |
+          mkdir -p temp
+          cd temp
+          git init
+          git remote add origin https://github.com/${{ github.repository }}.git
+          git fetch origin gh-pages
+          git checkout origin/gh-pages -- history.json 2>/dev/null || echo '[]' > ../playwright-report/history.json
+          cp history.json ../playwright-report/ 2>/dev/null || true
+          cd ..
+          TIMESTAMP=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+          RUN_URL="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          COMMIT_SHA="${{ github.sha }}"
+          REF="${{ github.ref }}"
+          CONCLUSION="${{ job.status }}"
+          if [ -f playwright-report/results.json ]; then
+            COUNTS=$(jq '.summary | {passed, failed, skipped}' playwright-report/results.json)
+          else
+            COUNTS=null
+          fi
+          NEW_ENTRY=$(jq -n --arg ts "$TIMESTAMP" --arg url "$RUN_URL" --arg sha "$COMMIT_SHA" --arg ref "$REF" --arg conc "$CONCLUSION" --argjson counts "$COUNTS" '{timestamp: $ts, runUrl: $url, commitSha: $sha, ref: $ref, conclusion: $conc, counts: $counts}')
+          jq ". + [$NEW_ENTRY]" playwright-report/history.json > temp_history.json && mv temp_history.json playwright-report/history.json
+
+      - name: Upload pages artifact
+        if: always() && github.ref == 'refs/heads/main'
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: playwright-report/
+
+      - name: Deploy to GitHub Pages
+        if: always() && github.ref == 'refs/heads/main'
+        uses: actions/deploy-pages@v4
+
+  security-scan:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: lts/*
+          cache: yarn
+
+      - name: Install dependencies
+        run: yarn install --immutable --immutable-cache --check-cache
+
+      - name: Run security scan
+        continue-on-error: false
+        shell: bash
+        run: |
+          echo "## Security Scan Results" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+
+          yarn audit --audit-level high > audit_output.txt 2>&1 || true
+
+          if grep -Eqi "high|critical" audit_output.txt; then
+            cat audit_output.txt >> "$GITHUB_STEP_SUMMARY"
+            echo "" >> "$GITHUB_STEP_SUMMARY"
+            echo "High or critical vulnerabilities detected." >> "$GITHUB_STEP_SUMMARY"
+            exit 1
+          else
+            echo "No high or critical vulnerabilities found." >> "$GITHUB_STEP_SUMMARY"
+          fi
