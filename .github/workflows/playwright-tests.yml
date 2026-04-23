@@ -54,10 +54,11 @@ jobs:
           if-no-files-found: ignore
 
       - name: Send Teams notification on failure
-        if: failure()
+        if: ${{ failure() && secrets.TEAMS_WEBHOOK_URL != '' }}
+        shell: bash
         run: |
-          curl -X POST ${{ secrets.TEAMS_WEBHOOK_URL }} \
-            -H 'Content-Type: application/json' \
+          curl -X POST "${{ secrets.TEAMS_WEBHOOK_URL }}" \
+            -H "Content-Type: application/json" \
             -d '{
               "title": "Playwright Tests Failed",
               "sections": [
@@ -88,3 +89,38 @@ jobs:
                 }
               ]
             }'
+
+  security-scan:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: lts/*
+          cache: yarn
+
+      - name: Install dependencies
+        run: yarn install --immutable --immutable-cache --check-cache
+
+      - name: Run security scan
+        continue-on-error: false
+        shell: bash
+        run: |
+          echo "## Security Scan Results" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+
+          yarn audit --audit-level high > audit_output.txt 2>&1 || true
+
+          if grep -Eqi "high|critical" audit_output.txt; then
+            cat audit_output.txt >> "$GITHUB_STEP_SUMMARY"
+            echo "" >> "$GITHUB_STEP_SUMMARY"
+            echo "High or critical vulnerabilities detected." >> "$GITHUB_STEP_SUMMARY"
+            exit 1
+          else
+            echo "No high or critical vulnerabilities found." >> "$GITHUB_STEP_SUMMARY"
+          fi
